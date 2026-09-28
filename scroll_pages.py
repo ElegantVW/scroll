@@ -139,6 +139,7 @@ PAGES: list[AppPage] = [
             "✦ Menagerie ✦ keeps the living models in their pens. Pixie, Imp,",
             "and friends each get a port and a budget so the house does not",
             "drown in GGUFs. This is the switchboard, not the chat itself.",
+            "One pen stays warm and unlisted.",
         ],
         how=[
             "`menagerie` opens the TUI: apps, models, budget.",
@@ -299,7 +300,7 @@ PAGES: list[AppPage] = [
             ("magpie --tor <query>", "Via Tor when available"),
             ("duck <query>", "Alias → magpie"),
         ],
-        runes=[R("search help", "magpie --help"), B()],
+        runes=[R("browse", "magpie --browse"), R("search help", "magpie --help"), B()],
     ),
     # ── House ──────────────────────────────────────────────────────────
     AppPage(
@@ -805,7 +806,7 @@ PAGES: list[AppPage] = [
             ("mourama play", "Open the hillfort window"),
             ("mourama invite", "Mint a one-time seat"),
         ],
-        runes=[B()],
+        runes=[R("play", "mourama play"), R("invite", "mourama invite"), B()],
     ),
     AppPage(
         id="grove",
@@ -818,7 +819,7 @@ PAGES: list[AppPage] = [
             "One page per layer, site and story in ElegantVW/grove.",
         ],
         how=[
-            "Read the map: faeos/docs/elegantvw.md.",
+            "Read the map: ~/faeOS/docs/elegantvw.md.",
             "Climb the site from the fire. Install order lives there.",
         ],
         cli=[
