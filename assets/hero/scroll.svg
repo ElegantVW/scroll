@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="360" viewBox="0 0 720 360">
+<rect width="720" height="360" fill="#1A1218"/>
+<g font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="26" text-anchor="middle">
+<text x="360" y="96" fill="#E0C090"> ___</text>
+<text x="360" y="126" fill="#E0C090">|---|</text>
+<text x="360" y="156" fill="#E0C090">|---|</text>
+<text x="360" y="186" fill="#E0C090">|___|</text>
+</g>
+<text x="360" y="272" fill="#F0E4EE" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="30" font-weight="bold" text-anchor="middle">Scroll</text>
+<text x="360" y="304" fill="#6B6FA8" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="16" text-anchor="middle">one page per app, Tab teaches faeOS</text>
+</svg>
