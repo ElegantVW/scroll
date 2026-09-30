@@ -815,7 +815,7 @@ PAGES: list[AppPage] = [
         tagline="The mother clearing — fire, glass, house, suite.",
         intro=[
             "✦ Grove ✦ is the bigger picture: Kindling fire, Seal glass,",
-            "the house that does not lie, and the faeOS suite.",
+            "the house with readable walls, and the faeOS suite.",
             "One page per layer, site and story in ElegantVW/grove.",
         ],
         how=[
