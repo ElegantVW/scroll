@@ -12,6 +12,8 @@ to your prompt so you may finish the line yourself.
 Runs from a faeOS checkout: shared house libs (`fae_termart`, `fae_egg`,
 `fae_ambience`) live in faeOS `bin/` — faeOS keeps only a thin launcher.
 
+For: faeOS onboarding, one page per app. Not for: standalone use outside faeOS.
+
 ## Look
 
 ![Scroll summon page](assets/screenshots/scroll-summon.png)
