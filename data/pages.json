@@ -1,0 +1,1817 @@
+{
+  "domains": [
+    "Discover",
+    "Mind",
+    "Media",
+    "Net",
+    "House",
+    "Ward",
+    "Play",
+    "System"
+  ],
+  "curriculum": [
+    "scroll",
+    "summon",
+    "pixie",
+    "menagerie",
+    "imp",
+    "siren",
+    "ether",
+    "goblin",
+    "magpie",
+    "spellbook",
+    "tome",
+    "grimoire",
+    "scry",
+    "faectl",
+    "eye",
+    "vault",
+    "alchemy",
+    "abacus",
+    "quests",
+    "hourglass",
+    "almanac",
+    "imbue",
+    "reflection",
+    "zen",
+    "bulwark",
+    "seal",
+    "fairy",
+    "wisp",
+    "tick",
+    "hearth",
+    "rift",
+    "mourama",
+    "grove",
+    "switcher",
+    "tv"
+  ],
+  "pages": [
+    {
+      "id": "scroll",
+      "name": "Scroll",
+      "domain": "Discover",
+      "tagline": "The living book of faeOS — one page per familiar, Tab turns the leaves.",
+      "intro": [
+        "✦ Scroll ✦ is how the house teaches itself. Each page is one creature:",
+        "who she is, how to live with her (keys included), which spells to type,",
+        "and runes that cast her. The last leaf is PATH — every tool on $PATH,",
+        "printed to your prompt so you may finish the line yourself."
+      ],
+      "how": [
+        "Tab / Shift-Tab — next / previous page (the lesson path).",
+        "j/k or wheel — scroll long pages · 1–9 — cast footer runes · q — close the book.",
+        "m or Ctrl-p — play/pause book ambience (own mpv; leaves Siren alone).",
+        "Page jump (vim-style): g then 1–9 or 0 → pages 11–20; G then digit → 21–30.",
+        "Digits alone always mean runes on this page, not page numbers.",
+        "summon / scroll --path open the final PATH leaf directly."
+      ],
+      "cli": [
+        {
+          "command": "scroll",
+          "description": "Open the book on page one"
+        },
+        {
+          "command": "scroll --path",
+          "description": "Open the PATH leaf (same as summon)"
+        },
+        {
+          "command": "scroll list",
+          "description": "Print every page as text (for grepping)"
+        },
+        {
+          "command": "summon",
+          "description": "PATH leaf short name"
+        },
+        {
+          "command": "summon -x <cmd>",
+          "description": "Run a PATH match without the TUI"
+        }
+      ],
+      "runes": [
+        {
+          "label": "path leaf",
+          "command": "scroll --path",
+          "kind": "run"
+        },
+        {
+          "label": "list text",
+          "command": "scroll list",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "summon",
+      "name": "Summon",
+      "domain": "Discover",
+      "tagline": "The PATH door — Summon is Scroll wearing a shorter cloak.",
+      "intro": [
+        "✦ Summon ✦ does not keep her own library anymore. She opens Scroll",
+        "straight on the PATH tab: type a few letters, cast any tool the",
+        "system knows. Fae creatures still live under Scroll's other pages."
+      ],
+      "how": [
+        "`summon` opens Scroll on PATH · type to filter · Enter returns the command name to the shell.",
+        "`summon -x <query> [args…]` runs the first PATH match without a TUI.",
+        "`summon --list` prints PATH names · `summon --refresh` rebuilds the six-hour cache.",
+        "Fae spells live earlier in Scroll; the shell wrapper places the chosen name on the command line."
+      ],
+      "cli": [
+        {
+          "command": "summon",
+          "description": "Open Scroll directly on the PATH leaf"
+        },
+        {
+          "command": "summon -x <cmd> [args…]",
+          "description": "Run the first PATH match and pass remaining arguments"
+        },
+        {
+          "command": "summon --list",
+          "description": "Print every PATH command name"
+        },
+        {
+          "command": "summon --refresh",
+          "description": "Atomically rebuild the shared PATH cache (six-hour TTL)"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open PATH",
+          "command": "summon",
+          "kind": "run"
+        },
+        {
+          "label": "refresh",
+          "command": "summon --refresh",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "pixie",
+      "name": "Pixie",
+      "domain": "Mind",
+      "tagline": "Local agent — house tools and a local model, with a web-aware Deep mode.",
+      "intro": [
+        "✦ Pixie ✦ is the house's local AI familiar. Menagerie keeps her",
+        "own model instance warm; Chat, Build, and Plan work with local",
+        "tools and files. Deep can reach the web when research calls for it."
+      ],
+      "how": [
+        "Bare `pixie` opens the dashboard; `pixie \"…\"` begins a chat.",
+        "`--new` / `--resume` enter a fresh or named thread without the dashboard.",
+        "Tab / Shift-Tab changes Chat, Deep, Build, and Plan; `v` shows tool calls.",
+        "If her model sleeps, try `menagerie ensure pixie`."
+      ],
+      "cli": [
+        {
+          "command": "pixie \"…\"",
+          "description": "Chat / agent turn"
+        },
+        {
+          "command": "pixie --new",
+          "description": "Start a new thread directly"
+        },
+        {
+          "command": "ask \"…\"",
+          "description": "Sibling entry to the same engine"
+        },
+        {
+          "command": "menagerie ensure pixie",
+          "description": "Wake her model if sleeping"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "pixie",
+          "kind": "run"
+        },
+        {
+          "label": "ensure model",
+          "command": "menagerie ensure pixie",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "menagerie",
+      "name": "Menagerie",
+      "domain": "Mind",
+      "tagline": "AI control center — which model each familiar wears, and RAM.",
+      "intro": [
+        "✦ Menagerie ✦ keeps the living models in their pens. Pixie, Imp,",
+        "and friends each get a port and a budget so the house does not",
+        "drown in GGUFs. This is the switchboard, not the chat itself.",
+        "Each familiar keeps its own server, port, model binding, and budget."
+      ],
+      "how": [
+        "`menagerie` opens the TUI: apps, models, budget.",
+        "ensure <app> wakes a pen · set <app> <model> rebinds · status all surveys.",
+        "Keys follow the pink list pattern: ↑↓ · Enter · q."
+      ],
+      "cli": [
+        {
+          "command": "menagerie",
+          "description": "Control-center TUI"
+        },
+        {
+          "command": "menagerie status all",
+          "description": "Table: app · model · port · status"
+        },
+        {
+          "command": "menagerie ensure <app>",
+          "description": "Start that app's llama-server"
+        },
+        {
+          "command": "menagerie set <app> <model>",
+          "description": "Rebind model id"
+        },
+        {
+          "command": "menagerie models",
+          "description": "Registered GGUFs"
+        },
+        {
+          "command": "menagerie budget",
+          "description": "RAM budget for loaded models"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "menagerie",
+          "kind": "run"
+        },
+        {
+          "label": "status",
+          "command": "menagerie status all",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "imp",
+      "name": "Imp",
+      "domain": "Mind",
+      "tagline": "Terminal art spirit — wish aloud, receive a crystal of ANSI.",
+      "intro": [
+        "✦ Imp ✦ paints for the prompt. Speak a wish; a local coder-model",
+        "fills a fixed grid; a grumpy haiku cousin may snark in the margin.",
+        "Pieces land in ~/pixie_art. Oh — and he only trusts loopback LLMs."
+      ],
+      "how": [
+        "`imp` — TUI · type a wish · Enter conjures.",
+        "Keys: a animate frames · r refine · s save · g gallery · Tab style · q quit.",
+        "One-shot: imp \"a moonlit mushroom\"  ·  human voice: imp paint \"…\""
+      ],
+      "cli": [
+        {
+          "command": "imp",
+          "description": "Art TUI"
+        },
+        {
+          "command": "imp \"wish\"",
+          "description": "One-shot conjure + gallery save"
+        },
+        {
+          "command": "imp --gallery",
+          "description": "List saved pieces"
+        },
+        {
+          "command": "imp --demo",
+          "description": "Sample frame without a model"
+        },
+        {
+          "command": "imp --style ascii|unicode|…",
+          "description": "Pick a palette mode"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "imp",
+          "kind": "run"
+        },
+        {
+          "label": "demo",
+          "command": "imp --demo",
+          "kind": "run"
+        },
+        {
+          "label": "gallery",
+          "command": "imp --gallery",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "siren",
+      "name": "Siren",
+      "domain": "Media",
+      "tagline": "The music vessel — local library, queue, radio, speakers, and free trove.",
+      "intro": [
+        "✦ Siren ✦ plays local music through mpv and can send sound to",
+        "speakers on the LAN. Her tabs hold the library, queue, audio, mixer,",
+        "free trove, radio, and a live visualizer."
+      ],
+      "how": [
+        "`siren` opens the player. Tab / Shift-Tab cycles views; `h` shows help.",
+        "`p` pauses · `n`/`b` skip · arrows seek · `q` closes the vessel.",
+        "The trove searches free music; radio streams play without entering the file queue.",
+        "Follow can carry local playback to Cave while the headset stays on its own path."
+      ],
+      "cli": [
+        {
+          "command": "siren",
+          "description": "Interactive player TUI"
+        },
+        {
+          "command": "siren play <query>",
+          "description": "Fuzzy-play from the library"
+        },
+        {
+          "command": "siren random",
+          "description": "Shuffle everything"
+        },
+        {
+          "command": "siren pause | next | prev | now",
+          "description": "Transport / status"
+        },
+        {
+          "command": "siren queue list",
+          "description": "Show the queue"
+        },
+        {
+          "command": "siren playlist load <name>",
+          "description": "Load a saved list"
+        },
+        {
+          "command": "siren trove music lofi",
+          "description": "Browse free Internet Archive audio"
+        },
+        {
+          "command": "siren radio",
+          "description": "Browse and play radio stations"
+        },
+        {
+          "command": "siren audio follow on|off",
+          "description": "Route local music to the Cave speakers"
+        },
+        {
+          "command": "siren config set <key> <val>",
+          "description": "volume · mouse · gapless · …"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open TUI",
+          "command": "siren",
+          "kind": "run"
+        },
+        {
+          "label": "random",
+          "command": "siren random",
+          "kind": "run"
+        },
+        {
+          "label": "now",
+          "command": "siren now",
+          "kind": "run"
+        },
+        {
+          "label": "trove",
+          "command": "siren trove music lofi",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "ether",
+      "name": "Ether",
+      "domain": "Net",
+      "tagline": "Network weaves — bluetooth, wifi, lan, veil, bridge.",
+      "intro": [
+        "✦ Ether ✦ tends the invisible roads. Live TUI for bt · wifi · lan,",
+        "a VPN veil when you want privacy, and a phone-hotspot bridge when",
+        "the house wifi sulks. Whisper and listen tune your speakers."
+      ],
+      "how": [
+        "`ether` — live TUI (w/l weave · s scan · n new · d remove · R restart · q).",
+        "`ether status` one-shot report · `ether veil on|off` for the VPN.",
+        "Headphones: whisper ether · speaker: listen ether."
+      ],
+      "cli": [
+        {
+          "command": "ether",
+          "description": "Live network TUI"
+        },
+        {
+          "command": "ether status",
+          "description": "bt · wifi · lan snapshot"
+        },
+        {
+          "command": "ether net",
+          "description": "Reachability check"
+        },
+        {
+          "command": "ether veil on|off",
+          "description": "VPN up/down"
+        },
+        {
+          "command": "ether bridge",
+          "description": "Phone hotspot fallback"
+        },
+        {
+          "command": "whisper ether",
+          "description": "ANC headphones default sink"
+        },
+        {
+          "command": "listen ether",
+          "description": "JBL Go default sink"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "ether",
+          "kind": "run"
+        },
+        {
+          "label": "status",
+          "command": "ether status",
+          "kind": "run"
+        },
+        {
+          "label": "veil on",
+          "command": "ether veil on",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "goblin",
+      "name": "Goblin",
+      "domain": "Net",
+      "tagline": "Mail spirit — aerc IMAP into local text the house can read.",
+      "intro": [
+        "✦ Goblin ✦ steals letters from the sky (IMAP) and stacks them as",
+        "plain text under his nest. Sync for new mail, list to peek, bundle",
+        "when Pixie should summarize the unread pile."
+      ],
+      "how": [
+        "`goblin` — mail TUI · `goblin sync` — pull UNSEEN to unread/*.txt.",
+        "Keys follow list TUIs (j/k · Enter · q). IDLE watcher can squeak on new mail."
+      ],
+      "cli": [
+        {
+          "command": "goblin",
+          "description": "Mail TUI"
+        },
+        {
+          "command": "goblin sync",
+          "description": "Download unseen mail"
+        },
+        {
+          "command": "goblin list",
+          "description": "List local mail files"
+        },
+        {
+          "command": "goblin bundle",
+          "description": "Unread digest for summarization"
+        },
+        {
+          "command": "goblin show <file>",
+          "description": "Print one message"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "goblin",
+          "kind": "run"
+        },
+        {
+          "label": "sync",
+          "command": "goblin sync",
+          "kind": "run"
+        },
+        {
+          "label": "list",
+          "command": "goblin list",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "magpie",
+      "name": "Magpie",
+      "domain": "Net",
+      "tagline": "Private web seeker — DuckDuckGo search and a local, full-screen browser.",
+      "intro": [
+        "✦ Magpie ✦ searches the web without Google or accounts, then opens",
+        "pages in her own terminal browser. She keeps cookies in memory only,",
+        "asks before running site scripts, and can ask local Pixie to summarize."
+      ],
+      "how": [
+        "Bare `magpie` opens the search den; `magpie \"…\"` searches DuckDuckGo.",
+        "`magpie browse [url]` opens the browser; `/` finds text on the page.",
+        "`magpie browse --dump URL` prints page text without the TUI.",
+        "The `;` settings panel and `magpie config` share one local config file."
+      ],
+      "cli": [
+        {
+          "command": "magpie",
+          "description": "TUI den: seek, process, judge"
+        },
+        {
+          "command": "magpie \"query\"",
+          "description": "Search DuckDuckGo and summarize locally"
+        },
+        {
+          "command": "magpie browse [url]",
+          "description": "Open the terminal browser"
+        },
+        {
+          "command": "magpie browse --dump <url>",
+          "description": "Print page text without opening the TUI"
+        },
+        {
+          "command": "magpie config list|get|set|reset",
+          "description": "Read or change local browser/search settings"
+        }
+      ],
+      "runes": [
+        {
+          "label": "search",
+          "command": "magpie \"faeOS\"",
+          "kind": "run"
+        },
+        {
+          "label": "browse",
+          "command": "magpie browse",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "spellbook",
+      "name": "Spellbook",
+      "domain": "House",
+      "tagline": "File manager — shelves, scrolls, and a path picker shared by the house.",
+      "intro": [
+        "✦ Spellbook ✦ is the terminal file manager. Browse and tend files",
+        "with the keyboard or mouse; other apps use her shared picker when",
+        "they need you to choose a path."
+      ],
+      "how": [
+        "`spellbook [dir]` · j/k or arrows move · l/o/Enter open · h goes to parent.",
+        "Ctrl+L or `:` types a path · `y` yanks · `Y` yanks the shelf · `P` paste-go.",
+        "`?` help · `s` sort · `.` hidden files · `n/d/r/e` create/delete/rename/edit.",
+        "`spellbook --pick --output <file> [dir]` serves Tome and Fairy Lantern."
+      ],
+      "cli": [
+        {
+          "command": "spellbook",
+          "description": "File manager TUI"
+        },
+        {
+          "command": "spellbook <path>",
+          "description": "Open a shelf"
+        },
+        {
+          "command": "spellbook --pick --output <file> [dir]",
+          "description": "Write the chosen path for a caller"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "spellbook",
+          "kind": "run"
+        },
+        {
+          "label": "home",
+          "command": "spellbook ~",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "tome",
+      "name": "Tome",
+      "domain": "House",
+      "tagline": "Document reader — open a page of markdown or text.",
+      "intro": [
+        "✦ Tome ✦ reads. Point her at a file or a directory of readable",
+        "scrolls; she frames them for the terminal. Plans under",
+        "~/faeos/docs/plans are excellent late-night material."
+      ],
+      "how": [
+        "tome ~/faeos/faeOSplan.md — read the plan.",
+        "tome  alone browses readable files nearby. Keys: scroll · q leave."
+      ],
+      "cli": [
+        {
+          "command": "tome <file>",
+          "description": "Read a document"
+        },
+        {
+          "command": "tome",
+          "description": "Browse readable files here"
+        },
+        {
+          "command": "tome ~/faeos/docs/plans",
+          "description": "All app plans"
+        }
+      ],
+      "runes": [
+        {
+          "label": "plan",
+          "command": "tome ~/faeos/faeOSplan.md",
+          "kind": "run"
+        },
+        {
+          "label": "plans dir",
+          "command": "tome ~/faeos/docs/plans",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "grimoire",
+      "name": "Grimoire",
+      "domain": "House",
+      "tagline": "Markdown notes — pages under ~/notes.",
+      "intro": [
+        "✦ Grimoire ✦ binds your own spells as markdown. New pages open in",
+        "your editor; the TUI helps you wander the shelf of notes."
+      ],
+      "how": [
+        "`grimoire` — notes TUI · `grimoire new my idea` — create + edit.",
+        "Keep secrets out of the grimoire if the disk is not your confidant."
+      ],
+      "cli": [
+        {
+          "command": "grimoire",
+          "description": "Notes TUI"
+        },
+        {
+          "command": "grimoire new <title>",
+          "description": "Create a note and open the editor"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "grimoire",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "scry",
+      "name": "Scry",
+      "domain": "House",
+      "tagline": "Visions of what you already typed — command and output history.",
+      "intro": [
+        "✦ Scry ✦ keeps the after-images of your shell: commands and their",
+        "answers. Shift-Tab often summons her. Useful when a spell worked",
+        "once and the wording has fled your mind."
+      ],
+      "how": [
+        "`scry` — interactive visions (needs a real TTY).",
+        "Shift-Tab in the fae shell may open her without typing.",
+        "↑↓ browse · Enter expand/use · q leave."
+      ],
+      "cli": [
+        {
+          "command": "scry",
+          "description": "History TUI"
+        },
+        {
+          "command": "scry-log",
+          "description": "Related logging helper (if installed)"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "scry",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "faectl",
+      "name": "Wizard's Tower",
+      "domain": "House",
+      "tagline": "Control panel — faectl status and LLM restart.",
+      "intro": [
+        "✦ Wizard's Tower ✦ (command: faectl) surveys faeOS services at a",
+        "glance and can restart the local LLM stack when the models sulk."
+      ],
+      "how": [
+        "`faectl` or `faectl status` — report.",
+        "`faectl restart-llm` — poke the language spirits awake again."
+      ],
+      "cli": [
+        {
+          "command": "faectl",
+          "description": "Status (default)"
+        },
+        {
+          "command": "faectl status",
+          "description": "Same, explicit"
+        },
+        {
+          "command": "faectl restart-llm",
+          "description": "Restart local LLM services"
+        }
+      ],
+      "runes": [
+        {
+          "label": "status",
+          "command": "faectl status",
+          "kind": "run"
+        },
+        {
+          "label": "restart LLM",
+          "command": "faectl restart-llm",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "eye",
+      "name": "The Eye",
+      "domain": "House",
+      "tagline": "Process watcher — CPU, RSS, and a careful kill.",
+      "intro": [
+        "✦ The Eye ✦ never blinks at /proc. Sort by cpu or mem, filter the",
+        "crowd, and dismiss a runaway if you must. gentler than a raw kill."
+      ],
+      "how": [
+        "`eye` — live TUI · ↑↓ move · s cycle sort · filter keys as shown · q quit.",
+        "`eye list 15` — top fifteen once on stdout."
+      ],
+      "cli": [
+        {
+          "command": "eye",
+          "description": "Live process TUI"
+        },
+        {
+          "command": "eye list",
+          "description": "One-shot table"
+        },
+        {
+          "command": "eye list 15",
+          "description": "Top 15 by current sort"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "eye",
+          "kind": "run"
+        },
+        {
+          "label": "top 15",
+          "command": "eye list 15",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "vault",
+      "name": "Vault",
+      "domain": "House",
+      "tagline": "Disk treasure map — what is eating the drive?",
+      "intro": [
+        "✦ Vault ✦ weighs directories like a careful dragon. Dive toward the",
+        "heavy chests; Spellbook browses files, Vault finds bloat."
+      ],
+      "how": [
+        "`vault` opens at $HOME · vault /path · ↑↓ dive · q leave.",
+        "`vault list ~` — one-shot sizes on stdout."
+      ],
+      "cli": [
+        {
+          "command": "vault",
+          "description": "Map $HOME"
+        },
+        {
+          "command": "vault <path>",
+          "description": "Map a path"
+        },
+        {
+          "command": "vault list [path]",
+          "description": "One-shot table"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "vault",
+          "kind": "run"
+        },
+        {
+          "label": "list home",
+          "command": "vault list ~",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "alchemy",
+      "name": "Alchemy",
+      "domain": "House",
+      "tagline": "Pacman cauldron — brew, sip, distill.",
+      "intro": [
+        "✦ Alchemy ✦ is the package kitchen. Brew installs, sip upgrades,",
+        "distill cleans the cache, pour un-brews. Pink TUI over pacman."
+      ],
+      "how": [
+        "`alchemy` — TUI · or brew firefox from the prompt when you know the potion name.",
+        "Needs sudo for brew/sip/distill — the cauldron will ask."
+      ],
+      "cli": [
+        {
+          "command": "alchemy",
+          "description": "Package TUI"
+        },
+        {
+          "command": "alchemy search <q>",
+          "description": "Search repos"
+        },
+        {
+          "command": "alchemy brew <pkg…>",
+          "description": "Install"
+        },
+        {
+          "command": "alchemy pour <pkg…>",
+          "description": "Remove"
+        },
+        {
+          "command": "alchemy sip",
+          "description": "Full upgrade"
+        },
+        {
+          "command": "alchemy distill",
+          "description": "Clean cache"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "alchemy",
+          "kind": "run"
+        },
+        {
+          "label": "sip",
+          "command": "alchemy sip",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "abacus",
+      "name": "Abacus",
+      "domain": "House",
+      "tagline": "Calculator — beads that respect order of operations.",
+      "intro": [
+        "✦ Abacus ✦ counts without drama. REPL for tinkering, or one-shot",
+        "quotes for the prompt: abacus \"2+2\"."
+      ],
+      "how": [
+        "`abacus` — interactive · type expressions · q leave.",
+        "abacus \"sqrt(2)\" — one answer and done."
+      ],
+      "cli": [
+        {
+          "command": "abacus",
+          "description": "Calculator REPL"
+        },
+        {
+          "command": "abacus \"2+2\"",
+          "description": "One-shot evaluate"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "abacus",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "quests",
+      "name": "Quests",
+      "domain": "House",
+      "tagline": "Todo.txt log — small oaths with optional due dates.",
+      "intro": [
+        "✦ Quests ✦ is your quest log (todo.txt spirit). Add tasks, mark",
+        "them done, let Almanac read the calendar side when due dates appear."
+      ],
+      "how": [
+        "`quests` — TUI or list · `quests add … due:YYYY-MM-DD` from the prompt."
+      ],
+      "cli": [
+        {
+          "command": "quests",
+          "description": "Quest log TUI / hub"
+        },
+        {
+          "command": "quests add <text>",
+          "description": "Add a quest"
+        },
+        {
+          "command": "quests add … due:YYYY-MM-DD",
+          "description": "Add with due date"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "quests",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "hourglass",
+      "name": "Hourglass",
+      "domain": "House",
+      "tagline": "Timer sand — pomodoros and gentle alarms.",
+      "intro": [
+        "✦ Hourglass ✦ turns time into visible sand. Twenty-five minutes for",
+        "focus, shorter grains for tea. Plays well with Zen when the break hits."
+      ],
+      "how": [
+        "`hourglass 25` — start a 25-minute pour · `hourglass` alone for the TUI."
+      ],
+      "cli": [
+        {
+          "command": "hourglass",
+          "description": "Timer TUI"
+        },
+        {
+          "command": "hourglass 25",
+          "description": "25-minute pomodoro"
+        }
+      ],
+      "runes": [
+        {
+          "label": "25m",
+          "command": "hourglass 25",
+          "kind": "run"
+        },
+        {
+          "label": "open",
+          "command": "hourglass",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "almanac",
+      "name": "Almanac",
+      "domain": "House",
+      "tagline": "Calendar hub — listens to Quests and Hourglass.",
+      "intro": [
+        "✦ Almanac ✦ is the day-book. She gathers due quests and hourglass",
+        "rhythms into today's agenda so you need not open three doors."
+      ],
+      "how": [
+        "`almanac` — hub TUI · `almanac today` — agenda on stdout."
+      ],
+      "cli": [
+        {
+          "command": "almanac",
+          "description": "Calendar hub TUI"
+        },
+        {
+          "command": "almanac today",
+          "description": "Today's agenda"
+        }
+      ],
+      "runes": [
+        {
+          "label": "today",
+          "command": "almanac today",
+          "kind": "run"
+        },
+        {
+          "label": "open",
+          "command": "almanac",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "imbue",
+      "name": "Imbue",
+      "domain": "House",
+      "tagline": "Clipboard memory — what you copied, remembered.",
+      "intro": [
+        "✦ Imbue ✦ remembers CLIPBOARD (and friends). Browse history, re-paste,",
+        "or run `imbue watch` so new copies are stored while you work.",
+        "Note: Ctrl+C in a terminal is interrupt — it does not copy. Copy",
+        "with your terminal's copy (or Ctrl+Shift+C); watch tracks that."
+      ],
+      "how": [
+        "`imbue` — history TUI · ↑↓ · Enter re-copy · y print+quit · / filter.",
+        "`imbue watch` — poll clipboard (needs a display bridge: wl/xclip/X11).",
+        "Without watch, only explicit set/add and TUI actions update history."
+      ],
+      "cli": [
+        {
+          "command": "imbue",
+          "description": "History TUI"
+        },
+        {
+          "command": "imbue list",
+          "description": "Recent clips"
+        },
+        {
+          "command": "imbue get",
+          "description": "Current clipboard"
+        },
+        {
+          "command": "imbue set <text>",
+          "description": "Set clipboard + store"
+        },
+        {
+          "command": "imbue watch",
+          "description": "Poll & remember new clips"
+        },
+        {
+          "command": "imbue clear",
+          "description": "Wipe history"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "imbue",
+          "kind": "run"
+        },
+        {
+          "label": "watch",
+          "command": "imbue watch",
+          "kind": "run"
+        },
+        {
+          "label": "list",
+          "command": "imbue list",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "reflection",
+      "name": "Reflection",
+      "domain": "House",
+      "tagline": "Screenshots & gallery — catch the glass of the desktop.",
+      "intro": [
+        "✦ Reflection ✦ freezes a moment: full desktop, focused window, or a",
+        "dragged region. Gallery views can go chafa-art or a real image opener."
+      ],
+      "how": [
+        "reflection full | window | region — capture.",
+        "reflection  alone opens the gallery TUI when available.",
+        "PrintScreen: terminals rarely deliver that key to apps. Bind it in",
+        "your WM/sxhkd, e.g. Print → reflection full  (simple and reliable)."
+      ],
+      "cli": [
+        {
+          "command": "reflection",
+          "description": "Gallery / hub"
+        },
+        {
+          "command": "reflection full",
+          "description": "Whole desktop"
+        },
+        {
+          "command": "reflection window",
+          "description": "Focused window"
+        },
+        {
+          "command": "reflection region",
+          "description": "Drag a rectangle"
+        },
+        {
+          "command": "reflection open --normal",
+          "description": "Open last shot in an image viewer"
+        }
+      ],
+      "runes": [
+        {
+          "label": "full",
+          "command": "reflection full",
+          "kind": "run"
+        },
+        {
+          "label": "window",
+          "command": "reflection window",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "zen",
+      "name": "Zen",
+      "domain": "House",
+      "tagline": "Browser break on another VT — shell stays free.",
+      "intro": [
+        "✦ Zen ✦ opens a fullscreen browser on its own virtual terminal so",
+        "your shell is not held hostage. Ctrl+Alt+F7 browser · F1 shell."
+      ],
+      "how": [
+        "`zen` start · `zen https://…` open a URL · `zen stop` end the session.",
+        "`zen focus` jump to the browser VT."
+      ],
+      "cli": [
+        {
+          "command": "zen",
+          "description": "Start browser break"
+        },
+        {
+          "command": "zen https://…",
+          "description": "Open URL"
+        },
+        {
+          "command": "zen stop",
+          "description": "Quit browser + X helper"
+        },
+        {
+          "command": "zen focus",
+          "description": "Switch to browser VT"
+        },
+        {
+          "command": "zen status",
+          "description": "Is Zen awake?"
+        }
+      ],
+      "runes": [
+        {
+          "label": "start",
+          "command": "zen",
+          "kind": "run"
+        },
+        {
+          "label": "stop",
+          "command": "zen stop",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "bulwark",
+      "name": "Bulwark",
+      "domain": "Ward",
+      "tagline": "Host protection — Aegis, Purity, Sentinel, Ward.",
+      "intro": [
+        "✦ Bulwark ✦ is the wall and the watch. First-party Rust: firewall",
+        "(Aegis), file photographs (Purity), listeners (Sentinel), hunts (Ward).",
+        "This page is the door sign — the deep tour and lab live inside Bulwark."
+      ],
+      "how": [
+        "`bulwark` — friendly TUI (SAFE / CARE / DANGER) · menu 1–7 · ? help.",
+        "Safe unprivileged: status · ports · ward · purity check · tour.",
+        "Aegis apply needs root/CAP and a confirm within ~90s (deadman undo).",
+        "Deep practice: follow bulwark tour, then a VM/netns lab when ready."
+      ],
+      "cli": [
+        {
+          "command": "bulwark",
+          "description": "Protection TUI"
+        },
+        {
+          "command": "bulwark status",
+          "description": "Posture report"
+        },
+        {
+          "command": "bulwark ward",
+          "description": "Hostile-pattern hunt"
+        },
+        {
+          "command": "bulwark ports",
+          "description": "Listening sockets + owners"
+        },
+        {
+          "command": "bulwark aegis show desktop",
+          "description": "Show profile"
+        },
+        {
+          "command": "sudo bulwark aegis apply desktop",
+          "description": "Raise Aegis (then confirm)"
+        },
+        {
+          "command": "bulwark purity baseline|check",
+          "description": "File integrity photo / diff"
+        },
+        {
+          "command": "bulwark tour",
+          "description": "Themed first walk"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "bulwark",
+          "kind": "run"
+        },
+        {
+          "label": "status",
+          "command": "bulwark status",
+          "kind": "run"
+        },
+        {
+          "label": "ward",
+          "command": "bulwark ward",
+          "kind": "run"
+        },
+        {
+          "label": "tour",
+          "command": "bulwark tour",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "seal",
+      "name": "Seal",
+      "domain": "Ward",
+      "tagline": "Screen lock and graphical login face for startx.",
+      "intro": [
+        "✦ Seal ✦ is the pink lock — animated X11 face, PAM auth, idle daemon.",
+        "She locks a running session, and can also greet: put seal-login in",
+        "your xinitrc so the desktop only starts after a password."
+      ],
+      "how": [
+        "`seal` — lock now. `seald` — idle auto-lock (user service).",
+        "`seal --greeter --session i3` or `seal-login` — graphical login face.",
+        "Source lives in the bulwark repo (glass/); faeOS keeps launchers.",
+        "PAM: /etc/pam.d/seal (bootstrap installs). Failed attempts never unlock."
+      ],
+      "cli": [
+        {
+          "command": "seal",
+          "description": "Lock the screen"
+        },
+        {
+          "command": "seal --greeter",
+          "description": "Login face (execs session on success)"
+        },
+        {
+          "command": "seal-login",
+          "description": "xinitrc helper → greeter + i3"
+        },
+        {
+          "command": "seald",
+          "description": "Idle lock daemon"
+        },
+        {
+          "command": "seal-tui",
+          "description": "Configure timeouts and users"
+        },
+        {
+          "command": "pixie-lock",
+          "description": "Legacy name when installed"
+        }
+      ],
+      "runes": [
+        {
+          "label": "lock",
+          "command": "seal",
+          "kind": "run"
+        },
+        {
+          "label": "tui",
+          "command": "seal-tui",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "fairy",
+      "name": "Fairy Lantern",
+      "domain": "Play",
+      "tagline": "Pocket worlds — from-scratch GBA fables.",
+      "intro": [
+        "✦ Fairy Lantern ✦ lights ROM fables on a home-grown ARM7TDMI + PPU.",
+        "No libretro middleman. Bare `fairy` opens the home TUI; play a",
+        ".gba when you have a cartridge path."
+      ],
+      "how": [
+        "`fairy` — home TUI · fairy play game.gba — windowed play.",
+        "In play: F5 savestate · F7 load · battery → .sav beside the ROM."
+      ],
+      "cli": [
+        {
+          "command": "fairy",
+          "description": "Home TUI"
+        },
+        {
+          "command": "fairy-lantern",
+          "description": "Same spirit"
+        },
+        {
+          "command": "fairy play <rom.gba>",
+          "description": "Play a fable"
+        },
+        {
+          "command": "fairy last",
+          "description": "Re-open last ROM"
+        },
+        {
+          "command": "fairy spark",
+          "description": "Built-in SPARK fable"
+        },
+        {
+          "command": "fairy info",
+          "description": "ROM header"
+        }
+      ],
+      "runes": [
+        {
+          "label": "home",
+          "command": "fairy",
+          "kind": "run"
+        },
+        {
+          "label": "spark",
+          "command": "fairy spark",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "wisp",
+      "name": "Wisp",
+      "domain": "Play",
+      "tagline": "Local Tapo lights — no cloud, just lanterns on the LAN.",
+      "intro": [
+        "✦ Wisp ✦ coaxes Tapo bulbs without the vendor cloud. Discover,",
+        "toggle, color, temperature — fae light under your roof."
+      ],
+      "how": [
+        "`wisp` — TUI or help · wisp on|off|toggle · wisp discover on first day."
+      ],
+      "cli": [
+        {
+          "command": "wisp",
+          "description": "Bulb control hub"
+        },
+        {
+          "command": "wisp on|off|toggle",
+          "description": "Power"
+        },
+        {
+          "command": "wisp status",
+          "description": "State"
+        },
+        {
+          "command": "wisp discover",
+          "description": "Find bulbs"
+        },
+        {
+          "command": "wisp set …",
+          "description": "Color / brightness / temp"
+        }
+      ],
+      "runes": [
+        {
+          "label": "status",
+          "command": "wisp status",
+          "kind": "run"
+        },
+        {
+          "label": "discover",
+          "command": "wisp discover",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "tick",
+      "name": "Tick / Termfix",
+      "domain": "System",
+      "tagline": "Prompt pulse and TTY first-aid after a wild TUI.",
+      "intro": [
+        "✦ Tick ✦ redraws living prompt bits (music, status) while idle, and",
+        "respects pixie-screen holds so a TUI is never wiped mid-spell.",
+        "✦ Termfix ✦ cooks a broken terminal back to line-edit sanity after",
+        "raw-mode mishaps. You want both in the house toolkit."
+      ],
+      "how": [
+        "`tick status` · `tick on 10` · `tick off`.",
+        "If the prompt is gibberish or keys echo wrong: `termfix` then try again.",
+        "Most fae TUIs already call cleanup; termfix is the spare key."
+      ],
+      "cli": [
+        {
+          "command": "tick status",
+          "description": "Tick + grace state"
+        },
+        {
+          "command": "tick on 10",
+          "description": "Idle clear / pulse every 10s"
+        },
+        {
+          "command": "tick off",
+          "description": "Freeze idle clear"
+        },
+        {
+          "command": "termfix",
+          "description": "Reset TTY line-edit (cooked mode)"
+        }
+      ],
+      "runes": [
+        {
+          "label": "status",
+          "command": "tick status",
+          "kind": "run"
+        },
+        {
+          "label": "termfix",
+          "command": "termfix",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "hearth",
+      "name": "Hearth",
+      "domain": "System",
+      "tagline": "Multi-user warmth — sessions and auth for the house.",
+      "intro": [
+        "✦ Hearth ✦ is faeOS multi-user auth and session switching. Still",
+        "growing into everyday default login; useful where multiple people",
+        "share the machine under fae branding."
+      ],
+      "how": [
+        "Run `hearth` when installed for session helpers. Pair with Seal for",
+        "lock-screen users and multi-user AUTH over the hearth socket."
+      ],
+      "cli": [
+        {
+          "command": "hearth",
+          "description": "Session / auth entry (if on PATH)"
+        },
+        {
+          "command": "hearth-guest",
+          "description": "Guest-related helper when present"
+        }
+      ],
+      "runes": [
+        {
+          "label": "open",
+          "command": "hearth",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "rift",
+      "name": "Rift",
+      "domain": "System",
+      "tagline": "A fae terminal emulator — very much still in the works.",
+      "intro": [
+        "✦ Rift ✦ is a from-scratch pink terminal emulator. Expect rough",
+        "edges; the house still lives happily on kmscon / existing terms.",
+        "Track progress in faeos/rift — not daily-driver yet."
+      ],
+      "how": [
+        "Only for the curious builder. Prefer your current terminal until",
+        "Rift's README says otherwise."
+      ],
+      "cli": [
+        {
+          "command": "rift",
+          "description": "Emulator binary when built/installed"
+        }
+      ],
+      "runes": [
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "mourama",
+      "name": "Mourama",
+      "domain": "Play",
+      "tagline": "Five-seat Iberian hillfort — the office box is the world.",
+      "intro": [
+        "✦ Mourama ✦ keeps a citânia: cobre, estanho, seara, orvalho.",
+        "Five seats, no sixth. Native window, local icons, Tailscale reach.",
+        "Server stays on :4747 — LAN only, never the whole internet."
+      ],
+      "how": [
+        "mourama invite — one-time code, max five seats.",
+        "mourama play — native window (Linux).",
+        "Repo: ElegantVW/mourama. World saves stay 0600 on disk."
+      ],
+      "cli": [
+        {
+          "command": "mourama play",
+          "description": "Open the hillfort window"
+        },
+        {
+          "command": "mourama invite",
+          "description": "Mint a one-time seat"
+        }
+      ],
+      "runes": [
+        {
+          "label": "play",
+          "command": "mourama play",
+          "kind": "run"
+        },
+        {
+          "label": "invite",
+          "command": "mourama invite",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "grove",
+      "name": "Grove",
+      "domain": "Discover",
+      "tagline": "The mother clearing — fire, glass, house, suite.",
+      "intro": [
+        "✦ Grove ✦ is the bigger picture: Kindling fire, Seal glass,",
+        "the house with readable walls, and the faeOS suite.",
+        "One page per layer, site and story in ElegantVW/grove."
+      ],
+      "how": [
+        "Read the map: ~/faeOS/docs/elegantvw.md.",
+        "Climb the site from the fire. Install order lives there."
+      ],
+      "cli": [
+        {
+          "command": "grove",
+          "description": "Front door (static site, serves anywhere)"
+        }
+      ],
+      "runes": [
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "switcher",
+      "name": "Switcher",
+      "domain": "System",
+      "tagline": "Alt+Tab window switcher — one held gesture, one panel.",
+      "intro": [
+        "✦ Switcher ✦ walks your windows. Hold Alt, tap Tab, let go to",
+        "land — one fae-hud panel holds the whole gesture, newest first.",
+        "fae-cascade keeps new windows from landing in one stack, and",
+        "i3-rescue stands watch so a dead i3 never strands the session."
+      ],
+      "how": [
+        "Alt+Tab — hold Alt, tap Tab to walk, release to land.",
+        "fae-cycle next|prev — same walk for scripts (Mod1+c).",
+        "Binding never fired? Check $XDG_RUNTIME_DIR/fae-cycle.log —",
+        "it tells 'never fired' apart from 'fired and unseen'."
+      ],
+      "cli": [
+        {
+          "command": "fae-cycle",
+          "description": "Walk windows forward (scripting)"
+        },
+        {
+          "command": "fae-cycle prev",
+          "description": "Walk windows backward"
+        },
+        {
+          "command": "fae-hud --cycle",
+          "description": "Hold the switcher panel (Alt+Tab runs this)"
+        }
+      ],
+      "runes": [
+        {
+          "label": "cycle next",
+          "command": "fae-cycle next",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    },
+    {
+      "id": "tv",
+      "name": "TV",
+      "domain": "System",
+      "tagline": "CRT shader for kitty — scanlines on demand.",
+      "intro": [
+        "✦ TV ✦ puts glass over kitty: a picom CRT shader with scanlines.",
+        "The choice persists — tv edits the picom config and restarts the",
+        "compositor, so the tube stays lit across sessions until you say off."
+      ],
+      "how": [
+        "`tv on` — light the tube · `tv off` — back to clean pixels.",
+        "Bare `tv` (or `tv status`) reports the current state."
+      ],
+      "cli": [
+        {
+          "command": "tv on",
+          "description": "Enable CRT shader for kitty"
+        },
+        {
+          "command": "tv off",
+          "description": "Disable it again"
+        },
+        {
+          "command": "tv status",
+          "description": "Report current state (same as bare tv)"
+        }
+      ],
+      "runes": [
+        {
+          "label": "on",
+          "command": "tv on",
+          "kind": "run"
+        },
+        {
+          "label": "off",
+          "command": "tv off",
+          "kind": "run"
+        },
+        {
+          "label": "back",
+          "command": "",
+          "kind": "back"
+        }
+      ]
+    }
+  ]
+}
