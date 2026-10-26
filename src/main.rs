@@ -1,3 +1,4 @@
+mod grove_keys;
 mod model;
 mod path_index;
 mod ui;
@@ -5,7 +6,7 @@ mod ui;
 use std::process::ExitCode;
 
 const HELP: &str = "\
-scroll — faeOS living book and PATH leaf
+scroll — Grove's living guide and PATH leaf
 
 Usage:
   scroll-rs              open the book on page one
@@ -17,11 +18,13 @@ Usage:
 Keys:
   Tab / Shift-Tab        next / previous page
   1–9                    cast footer runes
-  j/k or wheel           scroll / select
-  g/G then digit         jump to pages 11–20 / 21–30
+  Up / Down              scroll page or select a result
+  PageUp / PageDown      scroll or move by a screen
   Ctrl-F                 search and quick-jump to an app
   m / Ctrl-P              toggle Scroll ambience
   q                      close the book
+
+Set SCROLL_REDUCED_MOTION=1 to skip the launch splash and page-turn animation.
 ";
 
 fn main() -> ExitCode {

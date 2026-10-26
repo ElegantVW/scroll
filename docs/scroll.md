@@ -1,24 +1,36 @@
-# Scroll — living book (page carousel)
+# Scroll — Grove's living guide
 
 Canonical repo: `ElegantVW/scroll`. faeOS keeps only a thin launcher.
 
-**Role:** One **page per app**; Tab teaches faeOS; last leaf is PATH (print to prompt).
+**Role:** Grove's first guide: one **page per app**; Tab turns lessons; last
+leaf is PATH (print to prompt).
 **Status:** 35 static pages + egg leaf + PATH leaf = 37 leaves (switcher + tv added 2026-09-28).
 
 ## Navigation
-- **Tab / Shift-Tab** — next / previous page (curriculum order)
+- **Tab / Shift-Tab** — next / previous page (`cycle_next` /
+  `cycle_previous` in Grove's canonical keyboard catalog)
+- **↑ / ↓** — scroll lesson text; on PATH or search, select a result
+- **PageUp / PageDown** — move by one screen within lesson text or result lists
+- **Mouse wheel** — scroll lesson text or move the PATH selection
 - **1–9** — cast footer runes (**run** the spell)
-- **g / G + digit** — vim-style page jump (11–20 / 21–30)
-- **j/k · wheel** — scroll within a long page
+- **Ctrl+F** — search lesson names, commands, topics, and page text; Enter opens
+- **Launch splash** — sigil, scrambling title, rounded frame, and welcome cue;
+  any key or mouse skips it; `q` quits
+- **Vertical page turn** — Tab brings the next lesson from below; Shift+Tab
+  brings the previous lesson from above
+- **Reduced motion** — `SCROLL_REDUCED_MOTION=1` skips the splash and disables
+  page-turn motion
 - **PATH leaf** — filter · Enter → print name for shell `print -z`
-- Layout: near-fullscreen panels with small margin so box edges show
+- Layout: rounded, color-layered panels with a small outer margin
 
 ## Curriculum
 Python fallback order is in `CURRICULUM` in `scroll_pages.py`; Rust order and
 app/command copy lives in `data/pages.json`. Both end with **switcher**, **tv**,
 then the **Sealed Leaf** (or **Kur** if hatched), then **PATH**. Keep both
 copies aligned while the Python rollback remains supported. Appending new pages
-at the end keeps existing g/G jump positions stable.
+at the end keeps the lesson order stable. The Rust app is the polished
+Grove-first tutorial; the Python script remains a minimal rollback and does
+not promise visual or keybinding parity.
 
 ## Rust app and launcher
 - Build with `cargo build --release`; launch `target/release/scroll-rs`.
@@ -39,6 +51,11 @@ at the end keeps existing g/G jump positions stable.
 - Rust page text is maintained in `data/pages.json` against current faeOS
   app/CLI documentation. Keep `scroll_pages.py` aligned until the Python
   rollback is retired.
+- The Rust display uses one semantic Scroll palette and rounded frames.
+  `SCROLL_UNICODE=ascii` selects ASCII panel borders and `NO_COLOR` disables
+  terminal colors.
+- Developer and AI-agent guidance lives in `docs/development.md` and root
+  `AGENTS.md`; Codex harvests both from this canonical repository.
 
 ## Sealed Leaf / egg
 - Story: an **egg in the Menagerie** to hatch; points at **`murmur`** (babbling glass).

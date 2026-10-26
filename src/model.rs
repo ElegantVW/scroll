@@ -283,19 +283,6 @@ pub fn search_indices(leaves: &[Leaf], query: &str) -> Vec<usize> {
         .collect()
 }
 
-pub fn page_jump(mode: char, digit: char, page_count: usize) -> Option<usize> {
-    if !digit.is_ascii_digit() || !matches!(mode, 'g' | 'G') {
-        return None;
-    }
-    let base = if mode == 'g' { 10 } else { 20 };
-    let offset = if digit == '0' {
-        9
-    } else {
-        digit.to_digit(10)? as usize - 1
-    };
-    Some((base + offset).min(page_count.saturating_sub(1)))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -374,11 +361,12 @@ mod tests {
                 .split_whitespace()
                 .any(|word| word == "kur"));
         }
-        assert!(data
-            .pages
-            .iter()
-            .any(|page| page.id == "scroll"
-                && page.how.iter().any(|line| line.contains("Shift-Tab"))));
+        assert!(data.pages.iter().any(|page| {
+            page.id == "scroll"
+                && page.how.iter().any(|line| line.contains("Shift-Tab"))
+                && page.how.iter().any(|line| line.contains("PageUp/PageDown"))
+                && page.how.iter().any(|line| line.contains("Ctrl+F"))
+        }));
         assert!(data.pages.iter().any(|page| page.id == "summon"
             && page
                 .cli
@@ -451,16 +439,11 @@ mod tests {
     }
 
     #[test]
-    fn page_search_and_jump_navigation_are_stable() {
+    fn page_search_and_lesson_order_are_stable() {
         let data = load_data();
         let leaves = book_pages(&data, EggState::default());
         let results = search_indices(&leaves, "music player");
         assert!(results.iter().any(|index| leaves[*index].name() == "Siren"));
-        assert_eq!(page_jump('g', '1', 37), Some(10));
-        assert_eq!(page_jump('g', '0', 37), Some(19));
-        assert_eq!(page_jump('G', '1', 37), Some(20));
-        assert_eq!(page_jump('G', '0', 37), Some(29));
-        assert_eq!(page_jump('x', '1', 37), None);
         assert_eq!(leaves.len(), 37);
         assert!(matches!(leaves.last(), Some(Leaf::Path)));
     }

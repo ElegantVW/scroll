@@ -5,6 +5,7 @@ use crossterm::event::{
     self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers, MouseButton,
     MouseEventKind,
 };
+use crossterm::style::{Color, Print, ResetColor, SetForegroundColor};
 use crossterm::terminal::{self, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{execute, queue};
 use std::io::{self, IsTerminal, Write};
@@ -162,10 +163,294 @@ struct IndexMode {
     selected: usize,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PageTurnDirection {
+    Next,
+    Previous,
+}
+
+struct PageTransition {
+    from: Vec<String>,
+    started_at: Instant,
+    direction: PageTurnDirection,
+}
+
+const PAGE_TRANSITION_DURATION: Duration = Duration::from_millis(240);
+const SPLASH_DURATION: Duration = Duration::from_millis(2400);
+
+#[derive(Clone, Copy)]
+struct Theme {
+    color: bool,
+    unicode: bool,
+}
+
+impl Theme {
+    fn from_env() -> Self {
+        let no_color = std::env::var_os("NO_COLOR").is_some_and(|value| !value.is_empty())
+            || std::env::var("TERM").is_ok_and(|term| term == "dumb");
+        let unicode = unicode_enabled(std::env::var("SCROLL_UNICODE").ok().as_deref());
+        Self {
+            color: !no_color,
+            unicode,
+        }
+    }
+}
+
+fn unicode_enabled(setting: Option<&str>) -> bool {
+    !setting.is_some_and(|value| {
+        matches!(
+            value.trim().to_ascii_lowercase().as_str(),
+            "0" | "false" | "ascii" | "no" | "off"
+        )
+    })
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Ink {
+    Body,
+    Border,
+    Accent,
+    Secondary,
+    Muted,
+    Active,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct StyledSegment {
+    text: String,
+    ink: Ink,
+}
+
+fn ink_color(ink: Ink) -> Color {
+    match ink {
+        Ink::Body => Color::Rgb {
+            r: 0xff,
+            g: 0xeb,
+            b: 0xf2,
+        },
+        Ink::Border => Color::Rgb {
+            r: 0x9d,
+            g: 0x5c,
+            b: 0x75,
+        },
+        Ink::Accent => Color::Rgb {
+            r: 0xe8,
+            g: 0x79,
+            b: 0xa0,
+        },
+        Ink::Secondary => Color::Rgb {
+            r: 0x8e,
+            g: 0xc4,
+            b: 0xc8,
+        },
+        Ink::Muted => Color::Rgb {
+            r: 0xc0,
+            g: 0xc0,
+            b: 0xc8,
+        },
+        Ink::Active => Color::Rgb {
+            r: 0xff,
+            g: 0xb0,
+            b: 0x20,
+        },
+    }
+}
+
+fn styled_segments(line: &str) -> Vec<StyledSegment> {
+    let chars: Vec<char> = line.chars().collect();
+    let Some(last) = chars
+        .iter()
+        .rposition(|character| !character.is_whitespace())
+    else {
+        return Vec::new();
+    };
+    let leading = chars
+        .iter()
+        .take_while(|character| character.is_whitespace())
+        .count();
+    let content = line.trim_start();
+    let top_border = content.starts_with("╭─ ") || content.starts_with("+- ");
+    let bottom_border = content.starts_with("╰") || content.starts_with('+');
+    let content_line = content.starts_with('│') || content.starts_with('|');
+    let title_end = if top_border {
+        chars
+            .iter()
+            .enumerate()
+            .skip(leading + 3)
+            .find(|(_, character)| matches!(character, '─' | '-'))
+            .map(|(index, _)| index)
+            .unwrap_or(last)
+    } else {
+        0
+    };
+    let mut segments: Vec<StyledSegment> = Vec::new();
+    let title_word = ["Scroll", "lrcSlo", "rSclol", "olScrl", "cSroll", "Scorll"]
+        .iter()
+        .any(|word| line.contains(word));
+    for (index, character) in chars.iter().copied().enumerate() {
+        let ink = if top_border && index >= leading + 3 && index < title_end {
+            Ink::Accent
+        } else if top_border || bottom_border {
+            Ink::Border
+        } else if (content_line && (index == leading || index == last))
+            || (index == leading && matches!(character, '╭' | '╮' | '╰' | '╯' | '+' | '│' | '|'))
+        {
+            Ink::Border
+        } else if title_word {
+            Ink::Accent
+        } else if matches!(character, '✦' | '✧') {
+            Ink::Accent
+        } else if character == '▶' {
+            Ink::Active
+        } else if matches!(character, '·' | '…') {
+            Ink::Secondary
+        } else if line.contains("↑/↓ select") || line.contains("Enter prints") {
+            Ink::Muted
+        } else {
+            Ink::Body
+        };
+        if let Some(segment) = segments.last_mut().filter(|segment| segment.ink == ink) {
+            segment.text.push(character);
+        } else {
+            segments.push(StyledSegment {
+                text: character.to_string(),
+                ink,
+            });
+        }
+    }
+    segments
+}
+
+#[derive(Clone, Copy)]
+struct SplashAnimation {
+    started_at: Instant,
+}
+
+impl SplashAnimation {
+    fn finished(self, now: Instant) -> bool {
+        now.saturating_duration_since(self.started_at) >= SPLASH_DURATION
+    }
+
+    fn lines(self, now: Instant, columns: u16, rows: u16, theme: Theme) -> Vec<String> {
+        const SCRAMBLES: [&str; 6] = ["lrcSlo", "rSclol", "olScrl", "cSroll", "Scorll", "Scroll"];
+        const SIGILS: [&str; 6] = ["·", "✧", "✦", "✧", "✦", "✦"];
+        const ASCII_SIGILS: [&str; 6] = [".", "*", "#", "*", "#", "#"];
+
+        let elapsed = now.saturating_duration_since(self.started_at);
+        let elapsed_ms = elapsed.as_millis() as usize;
+        let frame = ((elapsed_ms / 90) % SCRAMBLES.len()).min(SCRAMBLES.len() - 1);
+        let letters_settled = elapsed_ms.saturating_sub(450) / 150;
+        let letters_settled = letters_settled.min("Scroll".len());
+        let scrambled: Vec<char> = SCRAMBLES[frame].chars().collect();
+        let final_title: Vec<char> = "Scroll".chars().collect();
+        let title: String = final_title[..letters_settled]
+            .iter()
+            .chain(scrambled[letters_settled..].iter())
+            .collect();
+        let sigil_frame = ((elapsed_ms / 180).min(SIGILS.len() - 1)) as usize;
+        let sigil = if theme.unicode {
+            SIGILS[sigil_frame]
+        } else {
+            ASCII_SIGILS[sigil_frame]
+        };
+        let frame_progress = elapsed_ms.saturating_sub(900).min(700) as f32 / 700.0;
+        let max_width = columns.saturating_sub(4).max(20).min(72) as usize;
+        let start_width = 26.min(max_width);
+        let frame_width = (start_width as f32
+            + (max_width.saturating_sub(start_width) as f32 * frame_progress))
+            .round()
+            .max(20.0) as usize;
+        let mut contents = vec![
+            String::new(),
+            format!("          {sigil}"),
+            format!("        {title}"),
+            String::new(),
+            "     A living guide to Grove".to_owned(),
+            "  Meet the house. Learn its tools.".to_owned(),
+            String::new(),
+            " Tab / Shift-Tab turn the lessons".to_owned(),
+            "       Any key to begin".to_owned(),
+        ];
+        let frame_title = if theme.unicode {
+            "✦ THE GROVE FIELD GUIDE ✦"
+        } else {
+            "* THE GROVE FIELD GUIDE *"
+        };
+        if elapsed_ms < 1450 {
+            contents[4].clear();
+            contents[5].clear();
+            contents[7].clear();
+            contents[8].clear();
+        } else if elapsed_ms < 1900 {
+            contents[7].clear();
+            contents[8].clear();
+        }
+        let frame = panel(frame_title, &contents, frame_width, 11, theme.unicode);
+        let x = (columns as usize).saturating_sub(frame_width) / 2;
+        let y = rows.saturating_sub(frame.len() as u16) / 2;
+        let mut lines = vec![String::new(); rows as usize];
+        for (index, line) in frame.iter().enumerate() {
+            let row = y as usize + index;
+            if row < lines.len() {
+                lines[row] = format!("{}{}", " ".repeat(x), line);
+            }
+        }
+        lines
+    }
+}
+
+impl PageTransition {
+    fn progress(&self, now: Instant) -> f32 {
+        (now.saturating_duration_since(self.started_at).as_secs_f32()
+            / PAGE_TRANSITION_DURATION.as_secs_f32())
+        .clamp(0.0, 1.0)
+    }
+
+    fn finished(&self, now: Instant) -> bool {
+        self.progress(now) >= 1.0
+    }
+
+    fn eased_shift(&self, now: Instant, rows: usize) -> usize {
+        let progress = self.progress(now);
+        let eased = 1.0 - (1.0 - progress).powi(3);
+        (eased * rows as f32).round() as usize
+    }
+
+    fn compose(&self, incoming: &[String], now: Instant, rows: usize, width: usize) -> Vec<String> {
+        let shift = self.eased_shift(now, rows).min(rows);
+        let incoming_start = rows.saturating_sub(shift);
+        (0..rows)
+            .map(|row| {
+                let source_row = match self.direction {
+                    PageTurnDirection::Next if row < incoming_start => self.from.get(row + shift),
+                    PageTurnDirection::Next => incoming.get(row - incoming_start),
+                    PageTurnDirection::Previous if row < shift => {
+                        incoming.get(row + incoming_start)
+                    }
+                    PageTurnDirection::Previous => self.from.get(row - shift),
+                };
+                source_row.map(|line| fit(line, width)).unwrap_or_default()
+            })
+            .collect()
+    }
+}
+
+fn reduced_motion_requested(value: Option<&str>) -> bool {
+    value.is_some_and(|value| {
+        matches!(
+            value.trim().to_ascii_lowercase().as_str(),
+            "1" | "true" | "yes" | "on"
+        )
+    })
+}
+
 struct Screen {
     lines: Vec<String>,
     hits: Vec<HitBox>,
     page_content_offset: usize,
+    page_content_size: usize,
+    path_selection_size: usize,
+    index_selection_size: usize,
     visible_path_count: usize,
     index_result_count: usize,
 }
@@ -214,9 +499,15 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
     let mut page_offset = 0usize;
     let mut path_filter = initial_filter;
     let mut path_selected = 0usize;
-    let mut jump_mode = None;
     let mut index_mode: Option<IndexMode> = None;
     let mut last_path_click: Option<(usize, Instant)> = None;
+    let motion_enabled =
+        !reduced_motion_requested(std::env::var("SCROLL_REDUCED_MOTION").ok().as_deref());
+    let mut splash = motion_enabled.then(|| SplashAnimation {
+        started_at: Instant::now(),
+    });
+    let mut page_transition: Option<PageTransition> = None;
+    let theme = Theme::from_env();
     if start_path {
         page_index = book_pages(&data, egg_state()).len().saturating_sub(1);
     }
@@ -226,6 +517,16 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
         let state = egg_state();
         let leaves = book_pages(&data, state);
         page_index = page_index.min(leaves.len().saturating_sub(1));
+        let now = Instant::now();
+        if splash.is_some_and(|animation| animation.finished(now)) {
+            splash = None;
+        }
+        if page_transition
+            .as_ref()
+            .is_some_and(|animation| animation.finished(now))
+        {
+            page_transition = None;
+        }
         let (columns, rows) = guard.output.size().unwrap_or((80, 24));
         let screen = render(
             &leaves,
@@ -236,6 +537,7 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
             index_mode.as_ref(),
             &entries,
             ambience.status(),
+            &theme,
             columns,
             rows,
         );
@@ -246,9 +548,34 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
                 .selected
                 .min(screen.index_result_count.saturating_sub(1));
         }
-        draw(&mut guard.output, &screen.lines);
+        let visible_lines = page_transition
+            .as_ref()
+            .map(|animation| {
+                animation.compose(
+                    &screen.lines,
+                    now,
+                    rows as usize,
+                    columns.saturating_sub(2).max(20) as usize,
+                )
+            })
+            .unwrap_or_else(|| screen.lines.clone());
+        if let Some(animation) = splash {
+            draw(
+                &mut guard.output,
+                &animation.lines(now, columns, rows, theme),
+                theme,
+            );
+        } else {
+            draw(&mut guard.output, &visible_lines, theme);
+        }
 
-        if !event::poll(Duration::from_millis(150)).unwrap_or(false) {
+        let animating = splash.is_some() || page_transition.is_some();
+        let poll_interval = if animating {
+            Duration::from_millis(16)
+        } else {
+            Duration::from_millis(150)
+        };
+        if !event::poll(poll_interval).unwrap_or(false) {
             continue;
         }
         let Ok(event) = event::read() else {
@@ -256,7 +583,16 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
         };
         match event {
             Event::Mouse(mouse) => {
-                jump_mode = None;
+                if splash.take().is_some() {
+                    page_transition = None;
+                    continue;
+                }
+                if page_transition.is_some() {
+                    page_transition = None;
+                    if matches!(mouse.kind, MouseEventKind::Down(MouseButton::Left)) {
+                        continue;
+                    }
+                }
                 match mouse.kind {
                     MouseEventKind::ScrollUp => {
                         if leaves[page_index].is_path() {
@@ -324,7 +660,29 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
                 }
             }
             Event::Key(key) => {
+                if splash.take().is_some() {
+                    page_transition = None;
+                    if key.code == KeyCode::Char('q')
+                        || key.code == KeyCode::Char('Q')
+                        || (key.code == KeyCode::Char('c')
+                            && key.modifiers.contains(KeyModifiers::CONTROL))
+                    {
+                        break 'ui UiResult::Quit;
+                    }
+                    continue;
+                }
+                if !crate::grove_keys::is_cycle_next(key.code, key.modifiers)
+                    && !crate::grove_keys::is_cycle_previous(key.code, key.modifiers)
+                {
+                    page_transition = None;
+                }
                 if let Some(mode) = index_mode.as_mut() {
+                    if let Some(selected) =
+                        navigation_target(mode.selected, key.code, screen.index_selection_size)
+                    {
+                        mode.selected = selected;
+                        continue;
+                    }
                     match key.code {
                         KeyCode::Esc => index_mode = None,
                         KeyCode::Enter => {
@@ -336,8 +694,6 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
                                 index_mode = None;
                             }
                         }
-                        KeyCode::Up => mode.selected = mode.selected.saturating_sub(1),
-                        KeyCode::Down => mode.selected = mode.selected.saturating_add(1),
                         KeyCode::Backspace => {
                             mode.query.pop();
                             mode.selected = 0;
@@ -365,46 +721,56 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
                     });
                     continue;
                 }
-                if let (Some(mode), KeyCode::Char(digit)) = (jump_mode, key.code) {
-                    if digit.is_ascii_digit() {
-                        page_index = crate::model::page_jump(mode, digit, leaves.len())
-                            .unwrap_or(page_index);
-                        page_offset = 0;
-                        path_filter.clear();
-                        jump_mode = None;
+                if crate::grove_keys::is_cycle_next(key.code, key.modifiers) {
+                    if motion_enabled {
+                        page_transition = Some(PageTransition {
+                            from: visible_lines.clone(),
+                            started_at: Instant::now(),
+                            direction: PageTurnDirection::Next,
+                        });
+                    } else {
+                        page_transition = None;
+                    }
+                    page_index = (page_index + 1) % leaves.len();
+                    page_offset = 0;
+                    path_filter.clear();
+                    path_selected = 0;
+                    continue;
+                }
+                if crate::grove_keys::is_cycle_previous(key.code, key.modifiers) {
+                    if motion_enabled {
+                        page_transition = Some(PageTransition {
+                            from: visible_lines.clone(),
+                            started_at: Instant::now(),
+                            direction: PageTurnDirection::Previous,
+                        });
+                    } else {
+                        page_transition = None;
+                    }
+                    page_index = page_index.checked_sub(1).unwrap_or(leaves.len() - 1);
+                    page_offset = 0;
+                    path_filter.clear();
+                    path_selected = 0;
+                    continue;
+                }
+                if leaves[page_index].is_path() {
+                    if let Some(selected) =
+                        navigation_target(path_selected, key.code, screen.path_selection_size)
+                    {
+                        path_selected = selected;
                         continue;
                     }
+                } else if let Some(offset) =
+                    navigation_target(page_offset, key.code, screen.page_content_size)
+                {
+                    page_offset = offset;
+                    continue;
                 }
-                jump_mode = None;
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Char('Q') => break 'ui UiResult::Quit,
-                    KeyCode::Char('g') => jump_mode = Some('g'),
-                    KeyCode::Char('G') => jump_mode = Some('G'),
                     KeyCode::Char('m') if !leaves[page_index].is_path() => ambience.toggle(),
                     KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         ambience.toggle()
-                    }
-                    KeyCode::Tab => {
-                        page_index = (page_index + 1) % leaves.len();
-                        page_offset = 0;
-                        path_filter.clear();
-                        path_selected = 0;
-                    }
-                    KeyCode::BackTab => {
-                        page_index = page_index.checked_sub(1).unwrap_or(leaves.len() - 1);
-                        page_offset = 0;
-                        path_filter.clear();
-                        path_selected = 0;
-                    }
-                    KeyCode::Up | KeyCode::Char('k') if leaves[page_index].is_path() => {
-                        path_selected = path_selected.saturating_sub(1)
-                    }
-                    KeyCode::Down | KeyCode::Char('j') if leaves[page_index].is_path() => {
-                        path_selected = path_selected.saturating_add(1)
-                    }
-                    KeyCode::Up | KeyCode::Char('k') => page_offset = page_offset.saturating_sub(1),
-                    KeyCode::Down | KeyCode::Char('j') => {
-                        page_offset = page_offset.saturating_add(1)
                     }
                     KeyCode::Enter if leaves[page_index].is_path() => {
                         if let Some(entry) = filtered(&entries, &path_filter).get(path_selected) {
@@ -447,14 +813,32 @@ pub fn run(start_path: bool, initial_filter: String, mut ambience: Ambience) -> 
     outcome
 }
 
-fn draw(output: &mut TerminalOutput, lines: &[String]) {
+fn navigation_target(current: usize, code: KeyCode, page_size: usize) -> Option<usize> {
+    match code {
+        KeyCode::Up => Some(current.saturating_sub(1)),
+        KeyCode::Down => Some(current.saturating_add(1)),
+        KeyCode::PageUp => Some(current.saturating_sub(page_size.max(1))),
+        KeyCode::PageDown => Some(current.saturating_add(page_size.max(1))),
+        _ => None,
+    }
+}
+
+fn draw(output: &mut TerminalOutput, lines: &[String], theme: Theme) {
     let _ = queue!(output, MoveTo(0, 0), Clear(ClearType::All));
     for (index, line) in lines.iter().enumerate() {
-        let _ = queue!(
-            output,
-            MoveTo(0, index as u16),
-            crossterm::style::Print(line)
-        );
+        let _ = queue!(output, MoveTo(0, index as u16));
+        if theme.color {
+            for segment in styled_segments(line) {
+                let _ = queue!(
+                    output,
+                    SetForegroundColor(ink_color(segment.ink)),
+                    Print(segment.text)
+                );
+            }
+            let _ = queue!(output, ResetColor);
+        } else {
+            let _ = queue!(output, Print(line));
+        }
     }
     let _ = output.flush();
 }
@@ -468,6 +852,7 @@ fn render(
     index_mode: Option<&IndexMode>,
     path_entries: &[PathEntry],
     music: &str,
+    theme: &Theme,
     columns: u16,
     rows: u16,
 ) -> Screen {
@@ -480,6 +865,9 @@ fn render(
         lines: Vec::new(),
         hits: Vec::new(),
         page_content_offset: page_offset,
+        page_content_size: 1,
+        path_selection_size: 1,
+        index_selection_size: 1,
         visible_path_count: 0,
         index_result_count: 0,
     };
@@ -495,7 +883,7 @@ fn render(
                 results.len()
             ),
         ];
-        let header_panel = panel("Scroll app index", &header, width, 5, None);
+        let header_panel = panel("Scroll app index", &header, width, 5, theme.unicode);
         lines.extend(header_panel);
         lines.push(String::new());
         let footer_height = 4;
@@ -503,6 +891,7 @@ fn render(
             .saturating_sub(lines.len() + footer_height)
             .max(4);
         let list_slots = list_height.saturating_sub(2).max(1);
+        screen.index_selection_size = list_slots;
         let start = mode
             .selected
             .saturating_sub(list_slots / 2)
@@ -531,15 +920,15 @@ fn render(
         if results.is_empty() {
             body.push("  (no matches)".to_owned());
         }
-        let panel_lines = panel("app index", &body, width, list_height, None);
+        let panel_lines = panel("app index", &body, width, list_height, theme.unicode);
         lines.extend(panel_lines);
         lines.push(String::new());
         lines.extend(panel(
             "quick jump",
-            &["↑/↓ select · Enter opens · type to search · Esc closes".to_owned()],
+            &["↑/↓ select · PgUp/PgDn move · Enter opens · Esc closes".to_owned()],
             width,
             footer_height,
-            None,
+            theme.unicode,
         ));
     } else if let Leaf::Path = leaf {
         let visible = filtered(path_entries, path_filter);
@@ -561,7 +950,7 @@ fn render(
             &header,
             width,
             5,
-            None,
+            theme.unicode,
         ));
         lines.push(String::new());
         let footer_height = 4;
@@ -569,6 +958,7 @@ fn render(
             .saturating_sub(lines.len() + footer_height)
             .max(4);
         let list_slots = list_height.saturating_sub(2).max(1);
+        screen.path_selection_size = list_slots;
         let selected = path_selected.min(visible.len().saturating_sub(1));
         let start = selected
             .saturating_sub(list_slots / 2)
@@ -596,22 +986,26 @@ fn render(
         if visible.is_empty() {
             body.push("  (no matches — Backspace or Ctrl+U clears filter)".to_owned());
         }
-        lines.extend(panel("path commands", &body, width, list_height, None));
+        lines.extend(panel(
+            "path commands",
+            &body,
+            width,
+            list_height,
+            theme.unicode,
+        ));
         lines.push(String::new());
         lines.extend(panel(
             "runes",
-            &[
-                "Enter / double-click prints name · ↑/↓ select · type to filter · q quit"
-                    .to_owned(),
-            ],
+            &["Enter prints · ↑/↓ select · PgUp/PgDn move · type filters · q quit".to_owned()],
             width,
             footer_height,
-            None,
+            theme.unicode,
         ));
     } else if let Leaf::App(page) = leaf {
         let body_height = row_budget.saturating_sub(5).max(5);
         let footer_height = 4;
         let body_slot_count = body_height.saturating_sub(2).max(1);
+        screen.page_content_size = body_slot_count;
         let body = page_content(page, width.saturating_sub(4).max(8));
         let content_offset = page_offset.min(body.len().saturating_sub(body_slot_count));
         screen.page_content_offset = content_offset;
@@ -627,7 +1021,13 @@ fn render(
                 _ => "",
             }
         );
-        lines.extend(panel(&title, &body_lines, width, body_height, None));
+        lines.extend(panel(
+            &title,
+            &body_lines,
+            width,
+            body_height,
+            theme.unicode,
+        ));
         lines.push(String::new());
         let runes = page.castable_runes();
         let labels: Vec<String> = if runes.is_empty() {
@@ -642,11 +1042,10 @@ fn render(
         let rune_row = labels.join("  ");
         let footer = vec![
             rune_row.clone(),
-            "1–9 cast · Ctrl+F app index · m music · Tab page · g/G jump · j/k scroll · q quit"
-                .to_owned(),
+            "1–9 cast · ↑/↓ scroll · PgUp/PgDn page · Ctrl+F search · Tab page · q quit".to_owned(),
         ];
         let footer_start = lines.len();
-        lines.extend(panel("runes", &footer, width, footer_height, None));
+        lines.extend(panel("runes", &footer, width, footer_height, theme.unicode));
         let mut x = 3usize;
         for (index, label) in labels.iter().enumerate() {
             let visible = unicode_width::UnicodeWidthStr::width(label.as_str());
@@ -714,13 +1113,13 @@ fn scroll_window(lines: &[String], offset: usize, slots: usize) -> Vec<String> {
     room = room.max(1);
     start = start.min(lines.len().saturating_sub(room));
     if start > 0 {
-        out.push(format!("… ↑ {start} above · j/k or wheel …"));
+        out.push(format!("… ↑ {start} above · ↑/↓ or wheel …"));
     }
     out.extend(lines.iter().skip(start).take(room).cloned());
     let end = (start + room).min(lines.len());
     has_below = end < lines.len();
     if has_below {
-        out.push(format!("… ↓ {} more · j/k or wheel …", lines.len() - end));
+        out.push(format!("… ↓ {} more · ↑/↓ or wheel …", lines.len() - end));
     }
     out.truncate(slots);
     out
@@ -764,7 +1163,7 @@ fn panel(
     content: &[String],
     width: usize,
     height: usize,
-    _selected: Option<usize>,
+    unicode: bool,
 ) -> Vec<String> {
     let width = width.max(20);
     let inner = width.saturating_sub(2);
@@ -772,13 +1171,27 @@ fn panel(
     let title = fit(title, title_slot).trim_end().to_owned();
     let title_width = UnicodeWidthStr::width(title.as_str());
     let remaining = inner.saturating_sub(title_width + 3);
-    let mut lines = vec![format!("┌─ {title} {}┐", "─".repeat(remaining))];
+    let (top_left, top_right, bottom_left, bottom_right, horizontal, vertical) = if unicode {
+        ('╭', '╮', '╰', '╯', '─', '│')
+    } else {
+        ('+', '+', '+', '+', '-', '|')
+    };
+    let mut lines = vec![format!(
+        "{top_left}{horizontal} {title} {}{top_right}",
+        horizontal.to_string().repeat(remaining)
+    )];
     let interior = height.saturating_sub(2);
     for index in 0..interior {
         let text = content.get(index).map(String::as_str).unwrap_or("");
-        lines.push(format!("│ {} │", fit(text, inner.saturating_sub(2))));
+        lines.push(format!(
+            "{vertical} {} {vertical}",
+            fit(text, inner.saturating_sub(2))
+        ));
     }
-    lines.push(format!("└{}┘", "─".repeat(inner)));
+    lines.push(format!(
+        "{bottom_left}{}{bottom_right}",
+        horizontal.to_string().repeat(inner)
+    ));
     lines
 }
 
@@ -1033,6 +1446,13 @@ impl Leaf {
 mod tests {
     use super::*;
 
+    fn trim_lines(lines: Vec<String>) -> Vec<String> {
+        lines
+            .into_iter()
+            .map(|line| line.trim_end().to_owned())
+            .collect()
+    }
+
     #[test]
     fn shell_argument_parser_preserves_quoted_rune_arguments() {
         assert_eq!(
@@ -1057,5 +1477,230 @@ mod tests {
         assert!(content.contains("CLI commands"));
         assert!(content.contains("PATH leaf"));
         assert!(content.contains("summon --refresh"));
+    }
+
+    #[test]
+    fn splash_storyboard_scrambles_resolves_and_finishes() {
+        let started_at = Instant::now();
+        let splash = SplashAnimation { started_at };
+        let theme = Theme {
+            color: true,
+            unicode: true,
+        };
+        let opening = splash.lines(started_at, 100, 30, theme).join("\n");
+        let middle = splash
+            .lines(started_at + Duration::from_millis(1200), 100, 30, theme)
+            .join("\n");
+        let settled = splash
+            .lines(started_at + SPLASH_DURATION, 100, 30, theme)
+            .join("\n");
+
+        assert!(opening.contains("Scroll") || opening.contains("lrcSlo"));
+        assert!(middle.contains("Scroll"));
+        assert!(settled.contains("A living guide to Grove"));
+        assert!(settled.contains("Tab / Shift-Tab turn the lessons"));
+        assert!(settled.contains("Any key to begin"));
+        assert!(!splash.finished(started_at + SPLASH_DURATION - Duration::from_millis(1)));
+        assert!(splash.finished(started_at + SPLASH_DURATION));
+    }
+
+    #[test]
+    fn splash_has_unicode_and_ascii_sigils_and_adapts_to_terminal_size() {
+        let now = Instant::now();
+        let splash = SplashAnimation { started_at: now };
+        let unicode = splash.lines(
+            now + Duration::from_millis(800),
+            80,
+            24,
+            Theme {
+                color: true,
+                unicode: true,
+            },
+        );
+        let ascii = splash.lines(
+            now + Duration::from_millis(800),
+            60,
+            18,
+            Theme {
+                color: false,
+                unicode: false,
+            },
+        );
+        assert!(unicode.iter().any(|line| line.contains('✦')));
+        assert!(ascii.iter().any(|line| line.contains('#')));
+        assert_eq!(ascii.len(), 18);
+        assert!(ascii.iter().all(|line| line.chars().count() <= 60));
+    }
+
+    #[test]
+    fn vertical_transition_pushes_in_opposite_directions_and_completes() {
+        let started_at = Instant::now();
+        let from: Vec<String> = (0..10).map(|row| format!("old-{row}")).collect();
+        let to: Vec<String> = (0..10).map(|row| format!("new-{row}")).collect();
+        let next = PageTransition {
+            from: from.clone(),
+            started_at,
+            direction: PageTurnDirection::Next,
+        };
+        let previous = PageTransition {
+            from: from.clone(),
+            started_at,
+            direction: PageTurnDirection::Previous,
+        };
+        let halfway = started_at + Duration::from_millis(120);
+        let next_frame = next.compose(&to, halfway, 10, 10);
+        let previous_frame = previous.compose(&to, halfway, 10, 10);
+
+        assert_eq!(trim_lines(next.compose(&to, started_at, 10, 10)), from);
+        assert_eq!(
+            trim_lines(next.compose(&to, started_at + PAGE_TRANSITION_DURATION, 10, 10)),
+            to
+        );
+        assert!(next_frame[0].starts_with("old-"));
+        assert!(next_frame[9].starts_with("new-"));
+        assert!(previous_frame[0].starts_with("new-"));
+        assert!(previous_frame[9].starts_with("old-"));
+        assert!(next.finished(started_at + PAGE_TRANSITION_DURATION));
+    }
+
+    #[test]
+    fn rapid_page_cycle_retargets_without_a_visible_jump() {
+        let started_at = Instant::now();
+        let original: Vec<String> = (0..10).map(|row| format!("page-a-{row}")).collect();
+        let middle: Vec<String> = (0..10).map(|row| format!("page-b-{row}")).collect();
+        let destination: Vec<String> = (0..10).map(|row| format!("page-c-{row}")).collect();
+        let first = PageTransition {
+            from: original,
+            started_at,
+            direction: PageTurnDirection::Next,
+        };
+        let retarget_at = started_at + Duration::from_millis(70);
+        let visible = first.compose(&middle, retarget_at, 10, 10);
+        let second = PageTransition {
+            from: visible.clone(),
+            started_at: retarget_at,
+            direction: PageTurnDirection::Next,
+        };
+        assert_eq!(second.compose(&destination, retarget_at, 10, 10), visible);
+        assert_eq!(
+            trim_lines(second.compose(
+                &destination,
+                retarget_at + PAGE_TRANSITION_DURATION,
+                10,
+                10
+            )),
+            destination
+        );
+    }
+
+    #[test]
+    fn reduced_motion_setting_accepts_common_true_values() {
+        for value in ["1", "true", "YES", " on "] {
+            assert!(reduced_motion_requested(Some(value)));
+        }
+        for value in [None, Some("0"), Some("false"), Some("no")] {
+            assert!(!reduced_motion_requested(value));
+        }
+    }
+
+    #[test]
+    fn panels_use_rounded_unicode_or_ascii_corners() {
+        let rounded = panel("lesson", &["hello".to_owned()], 24, 3, true);
+        assert!(rounded[0].starts_with("╭─ lesson"));
+        assert!(rounded[1].starts_with("│ "));
+        assert!(rounded[2].starts_with('╰'));
+
+        let ascii = panel("lesson", &["hello".to_owned()], 24, 3, false);
+        assert!(ascii[0].starts_with("+- lesson"));
+        assert!(ascii[1].starts_with("| "));
+        assert!(ascii[2].starts_with('+'));
+    }
+
+    #[test]
+    fn unicode_panels_are_default_and_ascii_can_be_requested() {
+        assert!(unicode_enabled(None));
+        assert!(unicode_enabled(Some("1")));
+        assert!(!unicode_enabled(Some("ascii")));
+        assert!(!unicode_enabled(Some("0")));
+    }
+
+    #[test]
+    fn semantic_styling_keeps_text_separate_from_terminal_colors() {
+        let segments = styled_segments("╭─ Scroll ✦ lesson ─╮");
+        assert!(segments.iter().any(|segment| segment.ink == Ink::Border));
+        assert!(segments.iter().any(|segment| segment.ink == Ink::Accent));
+        assert!(segments
+            .iter()
+            .all(|segment| !segment.text.contains("\u{1b}")));
+
+        let selected = styled_segments("│ ▶ chosen app │");
+        assert!(selected.iter().any(|segment| segment.ink == Ink::Active));
+    }
+
+    #[test]
+    fn conventional_navigation_moves_by_line_or_visible_page_size() {
+        assert_eq!(navigation_target(4, KeyCode::Up, 8), Some(3));
+        assert_eq!(navigation_target(4, KeyCode::Down, 8), Some(5));
+        assert_eq!(navigation_target(12, KeyCode::PageUp, 5), Some(7));
+        assert_eq!(navigation_target(12, KeyCode::PageDown, 5), Some(17));
+        assert_eq!(navigation_target(0, KeyCode::PageUp, 0), Some(0));
+        assert_eq!(navigation_target(4, KeyCode::Char('j'), 8), None);
+        assert_eq!(navigation_target(4, KeyCode::Char('g'), 8), None);
+    }
+
+    #[test]
+    fn path_and_search_lists_expose_their_visible_page_size() {
+        let data = crate::model::load_data();
+        let leaves = crate::model::book_pages(&data, crate::model::egg_state());
+        let path_entries: Vec<_> = (0..40)
+            .map(|index| PathEntry {
+                name: format!("command-{index}"),
+                directory: "/bin".to_owned(),
+            })
+            .collect();
+        let theme = Theme {
+            color: false,
+            unicode: true,
+        };
+        let path_screen = render(
+            &leaves,
+            leaves.len() - 1,
+            0,
+            "",
+            0,
+            None,
+            &path_entries,
+            "",
+            &theme,
+            100,
+            30,
+        );
+        assert!(path_screen.path_selection_size > 1);
+        assert!(
+            navigation_target(0, KeyCode::PageDown, path_screen.path_selection_size).unwrap() > 1
+        );
+
+        let index_mode = IndexMode {
+            query: String::new(),
+            selected: 0,
+        };
+        let index_screen = render(
+            &leaves,
+            0,
+            0,
+            "",
+            0,
+            Some(&index_mode),
+            &path_entries,
+            "",
+            &theme,
+            100,
+            30,
+        );
+        assert!(index_screen.index_result_count > 0);
+        assert!(index_screen.index_selection_size > 1);
+        assert!(
+            navigation_target(0, KeyCode::PageDown, index_screen.index_selection_size).unwrap() > 1
+        );
     }
 }

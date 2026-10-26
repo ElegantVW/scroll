@@ -51,20 +51,20 @@
       "id": "scroll",
       "name": "Scroll",
       "domain": "Discover",
-      "tagline": "The living book of faeOS — one page per familiar, Tab turns the leaves.",
+      "tagline": "Your first guide to Grove — meet each app, learn its keys, try its runes.",
       "intro": [
-        "✦ Scroll ✦ is how the house teaches itself. Each page is one creature:",
-        "who she is, how to live with her (keys included), which spells to type,",
-        "and runes that cast her. The last leaf is PATH — every tool on $PATH,",
-        "printed to your prompt so you may finish the line yourself."
+        "Welcome to Grove. Scroll is your guide to the apps in this house.",
+        "Each page shows what an app does, how to use it, and which commands",
+        "you can try. The last leaf opens your PATH tools and returns a choice",
+        "to your prompt so you can finish the command yourself."
       ],
       "how": [
-        "Tab / Shift-Tab — next / previous page (the lesson path).",
-        "j/k or wheel — scroll long pages · 1–9 — cast footer runes · q — close the book.",
+        "Tab / Shift-Tab — next / previous lesson; the same cycle across Grove.",
+        "↑/↓ scroll this lesson · PageUp/PageDown move by one screen · wheel also scrolls.",
+        "1–9 or click a footer rune to try its command · Ctrl+F searches all lessons.",
         "m or Ctrl-p — play/pause book ambience (own mpv; leaves Siren alone).",
-        "Page jump (vim-style): g then 1–9 or 0 → pages 11–20; G then digit → 21–30.",
-        "Digits alone always mean runes on this page, not page numbers.",
-        "summon / scroll --path open the final PATH leaf directly."
+        "On PATH, type to filter; ↑/↓ select · PageUp/PageDown move by a screen · Enter returns a command.",
+        "summon / scroll --path opens PATH directly · q closes the book."
       ],
       "cli": [
         {
